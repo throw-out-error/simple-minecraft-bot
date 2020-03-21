@@ -1,4 +1,4 @@
-//proudly stole from mineflayer so we dont need to do a whole bunch of boring math
+// proudly stolen from mineflayer so we dont need to do a whole bunch of boring math
 
 const Vec3 = require('vec3').Vec3
 const assert = require('assert')
@@ -15,7 +15,7 @@ const PHYSICS_INTERVAL_MS = 50
 const MAX_PHYSICS_DELTA_SECONDS = 0.2
 const WAIT_TIME_BEFORE_NEW_JUMP = 0.07
 
-function inject (bot) {
+function inject(bot) {
   const physics = {
     maxGroundSpeed: 4.317, // according to the internet
     terminalVelocity: 20.0, // guess
@@ -26,7 +26,7 @@ function inject (bot) {
     playerHeight: 1.74, // tested with a binary search
     jumpSpeed: 9.0, // seems good
     yawSpeed: 3.0, // seems good
-    sprintSpeed: 1.3 // correct
+    sprintSpeed: 1.3, // correct
   }
   physics.maxGroundSpeedSoulSand = physics.maxGroundSpeed * 0.4
   physics.maxGroundSpeedWater = physics.maxGroundSpeed * 0.3 // seems about right?
@@ -38,7 +38,7 @@ function inject (bot) {
     right: false,
     jump: false,
     sprint: false,
-    sneak: false
+    sneak: false,
   }
   let jumpQueued = false
   let lastSentYaw = null
@@ -48,31 +48,33 @@ function inject (bot) {
   let lastPhysicsFrameTime = null
   let lastFlyingUpdate = 0
 
-  function doPhysics () {
+  function doPhysics() {
     const now = new Date()
     const deltaSeconds = (now - lastPhysicsFrameTime) / 1000
     lastPhysicsFrameTime = now
-    const deltaToUse = deltaSeconds < MAX_PHYSICS_DELTA_SECONDS
-      ? deltaSeconds : MAX_PHYSICS_DELTA_SECONDS
+    const deltaToUse =
+      deltaSeconds < MAX_PHYSICS_DELTA_SECONDS
+        ? deltaSeconds
+        : MAX_PHYSICS_DELTA_SECONDS
     nextFrame(deltaToUse)
   }
 
-  function cleanup () {
+  function cleanup() {
     stopPhysics()
     stopPositionUpdates()
   }
 
-  function stopPositionUpdates () {
+  function stopPositionUpdates() {
     clearInterval(positionUpdateTimer)
     positionUpdateTimer = null
   }
 
-  function stopPhysics () {
+  function stopPhysics() {
     clearInterval(doPhysicsTimer)
     doPhysicsTimer = null
   }
 
-  function nextFrame (deltaSeconds) {
+  function nextFrame(deltaSeconds) {
     if (deltaSeconds < EPSILON) return // too fast
     const pos = bot.entity.position
     const vel = bot.entity.velocity
@@ -100,7 +102,11 @@ function inject (bot) {
     }
 
     // jumping
-    if ((controlState.jump || jumpQueued) && bot.entity.onGround && bot.entity.timeSinceOnGround > WAIT_TIME_BEFORE_NEW_JUMP) {
+    if (
+      (controlState.jump || jumpQueued) &&
+      bot.entity.onGround &&
+      bot.entity.timeSinceOnGround > WAIT_TIME_BEFORE_NEW_JUMP
+    ) {
       vel.y = physics.jumpSpeed
     }
     jumpQueued = false
@@ -121,10 +127,12 @@ function inject (bot) {
       if (!bot.entity.onGround) groundFriction *= 0.05
       // if friction would stop the motion, do it
       const maybeNewGroundFriction = oldGroundSpeed / deltaSeconds
-      groundFriction = groundFriction > maybeNewGroundFriction
-        ? maybeNewGroundFriction : groundFriction
-      acceleration.x -= vel.x / oldGroundSpeed * groundFriction
-      acceleration.z -= vel.z / oldGroundSpeed * groundFriction
+      groundFriction =
+        groundFriction > maybeNewGroundFriction
+          ? maybeNewGroundFriction
+          : groundFriction
+      acceleration.x -= (vel.x / oldGroundSpeed) * groundFriction
+      acceleration.z -= (vel.z / oldGroundSpeed) * groundFriction
     }
 
     // calculate new speed
@@ -132,8 +140,10 @@ function inject (bot) {
 
     // limit speed
     let currentMaxGroundSpeed
+    // console.log(pos.offset(0, -1, 0));
     const underBlock = bot.world.getBlock(pos.offset(0, -1, 0))
-    const inBlock = bot.world.getBlock(pos.offset(0, 0, 0))
+    // console.log(underBlock);
+    const inBlock = bot.world.getBlock(pos)
     if (underBlock && underBlock.type === 88) {
       currentMaxGroundSpeed = physics.maxGroundSpeedSoulSand
     } else if (inBlock && inBlock.type === 9) {
@@ -152,7 +162,11 @@ function inject (bot) {
       vel.x *= correctionScale
       vel.z *= correctionScale
     }
-    vel.y = math.clamp(-physics.terminalVelocity, vel.y, physics.terminalVelocity)
+    vel.y = math.clamp(
+      -physics.terminalVelocity,
+      vel.y,
+      physics.terminalVelocity
+    )
 
     // calculate new positions and resolve collisions
     let boundingBox = getBoundingBox()
@@ -160,11 +174,16 @@ function inject (bot) {
     let boundingBoxMax
     if (vel.x !== 0) {
       pos.x += vel.x * deltaSeconds
-      const blockX = Math.floor(pos.x + math.sign(vel.x) * physics.playerApothem)
+      const blockX = Math.floor(
+        pos.x + math.sign(vel.x) * physics.playerApothem
+      )
       boundingBoxMin = new Vec3(blockX, boundingBox.min.y, boundingBox.min.z)
       boundingBoxMax = new Vec3(blockX, boundingBox.max.y, boundingBox.max.z)
       if (collisionInRange(boundingBoxMin, boundingBoxMax)) {
-        pos.x = blockX + (vel.x < 0 ? 1 + physics.playerApothem : -physics.playerApothem) * 1.001
+        pos.x =
+          blockX +
+          (vel.x < 0 ? 1 + physics.playerApothem : -physics.playerApothem) *
+            1.001
         vel.x = 0
         boundingBox = getBoundingBox()
       }
@@ -172,11 +191,16 @@ function inject (bot) {
 
     if (vel.z !== 0) {
       pos.z += vel.z * deltaSeconds
-      const blockZ = Math.floor(pos.z + math.sign(vel.z) * physics.playerApothem)
+      const blockZ = Math.floor(
+        pos.z + math.sign(vel.z) * physics.playerApothem
+      )
       boundingBoxMin = new Vec3(boundingBox.min.x, boundingBox.min.y, blockZ)
       boundingBoxMax = new Vec3(boundingBox.max.x, boundingBox.max.y, blockZ)
       if (collisionInRange(boundingBoxMin, boundingBoxMax)) {
-        pos.z = blockZ + (vel.z < 0 ? 1 + physics.playerApothem : -physics.playerApothem) * 1.001
+        pos.z =
+          blockZ +
+          (vel.z < 0 ? 1 + physics.playerApothem : -physics.playerApothem) *
+            1.001
         vel.z = 0
         boundingBox = getBoundingBox()
       }
@@ -186,7 +210,9 @@ function inject (bot) {
     if (vel.y !== 0) {
       pos.y += vel.y * deltaSeconds
       const playerHalfHeight = physics.playerHeight / 2
-      const blockY = Math.floor(pos.y + playerHalfHeight + math.sign(vel.y) * playerHalfHeight)
+      const blockY = Math.floor(
+        pos.y + playerHalfHeight + math.sign(vel.y) * playerHalfHeight
+      )
       boundingBoxMin = new Vec3(boundingBox.min.x, blockY, boundingBox.min.z)
       boundingBoxMax = new Vec3(boundingBox.max.x, blockY, boundingBox.max.z)
       if (collisionInRange(boundingBoxMin, boundingBoxMax)) {
@@ -202,12 +228,24 @@ function inject (bot) {
     }
   }
 
-  function collisionInRange (boundingBoxMin, boundingBoxMax) {
+  function collisionInRange(boundingBoxMin, boundingBoxMax) {
     const cursor = new Vec3(0, 0, 0)
     let block
-    for (cursor.x = boundingBoxMin.x; cursor.x <= boundingBoxMax.x; cursor.x++) {
-      for (cursor.y = boundingBoxMin.y; cursor.y <= boundingBoxMax.y; cursor.y++) {
-        for (cursor.z = boundingBoxMin.z; cursor.z <= boundingBoxMax.z; cursor.z++) {
+    for (
+      cursor.x = boundingBoxMin.x;
+      cursor.x <= boundingBoxMax.x;
+      cursor.x++
+    ) {
+      for (
+        cursor.y = boundingBoxMin.y;
+        cursor.y <= boundingBoxMax.y;
+        cursor.y++
+      ) {
+        for (
+          cursor.z = boundingBoxMin.z;
+          cursor.z <= boundingBoxMax.z;
+          cursor.z++
+        ) {
           block = bot.world.getBlock(cursor)
           if (block && block.boundingBox === 'block') return true
         }
@@ -217,12 +255,12 @@ function inject (bot) {
     return false
   }
 
-  function calcGroundSpeedSquared () {
+  function calcGroundSpeedSquared() {
     const vel = bot.entity.velocity
     return vel.x * vel.x + vel.z * vel.z
   }
 
-  function getBoundingBox () {
+  function getBoundingBox() {
     const pos = bot.entity.position
     return {
       min: new Vec3(
@@ -234,17 +272,17 @@ function inject (bot) {
         pos.x + physics.playerApothem,
         pos.y + physics.playerHeight,
         pos.z + physics.playerApothem
-      ).floor()
+      ).floor(),
     }
   }
 
-  function sendPositionAndLook (entity) {
+  function sendPositionAndLook(entity) {
     // sends data, no logic
     const packet = {
       x: entity.position.x,
       y: entity.position.y,
       z: entity.position.z,
-      onGround: entity.onGround
+      onGround: entity.onGround,
     }
     packet.yaw = conv.toNotchianYaw(entity.yaw)
     packet.pitch = conv.toNotchianPitch(entity.pitch)
@@ -253,9 +291,14 @@ function inject (bot) {
     bot.emit('move')
   }
 
-  function sendPosition () {
+  function sendPosition() {
     // increment the yaw in baby steps so that notchian clients (not the server) can keep up.
-    if (typeof bot.entity.height !== 'number' || isNaN(bot.entity.height) || bot.entity.height < 0.1 || bot.entity.height > 1.65) {
+    if (
+      typeof bot.entity.height !== 'number' ||
+      isNaN(bot.entity.height) ||
+      bot.entity.height < 0.1 ||
+      bot.entity.height > 1.65
+    ) {
       // Sometimes this is NaN, not sure of why, it seems it's set via a position packet
       // Note seems some packets handled by 'position' event do not have a stance.
       bot.entity.height = 1.62
@@ -266,20 +309,26 @@ function inject (bot) {
       position: bot.entity.position,
       velocity: bot.entity.velocity,
       height: bot.entity.height,
-      onGround: bot.entity.onGround
+      onGround: bot.entity.onGround,
     }
     let deltaYaw = math.euclideanMod(sentPosition.yaw - lastSentYaw, PI_2)
-    deltaYaw = deltaYaw < 0
-      ? (deltaYaw < -PI ? deltaYaw + PI_2 : deltaYaw)
-      : (deltaYaw > PI ? deltaYaw - PI_2 : deltaYaw)
+    deltaYaw =
+      deltaYaw < 0
+        ? deltaYaw < -PI
+          ? deltaYaw + PI_2
+          : deltaYaw
+        : deltaYaw > PI
+        ? deltaYaw - PI_2
+        : deltaYaw
     const absDeltaYaw = Math.abs(deltaYaw)
     assert.ok(absDeltaYaw < PI + 0.001)
 
     const now = new Date()
     const deltaMs = now - lastPositionSentTime
     lastPositionSentTime = now
-    const maxDeltaYaw = deltaMs / 1000 * physics.yawSpeed
-    deltaYaw = absDeltaYaw > maxDeltaYaw ? maxDeltaYaw * math.sign(deltaYaw) : deltaYaw
+    const maxDeltaYaw = (deltaMs / 1000) * physics.yawSpeed
+    deltaYaw =
+      absDeltaYaw > maxDeltaYaw ? maxDeltaYaw * math.sign(deltaYaw) : deltaYaw
     lastSentYaw = (lastSentYaw + deltaYaw) % PI_2
     sentPosition.yaw = lastSentYaw
 
@@ -299,7 +348,7 @@ function inject (bot) {
 
   bot.physics = physics
 
-  bot.setControlState = function setControlState (control, state) {
+  bot.setControlState = function setControlState(control, state) {
     assert.ok(control in controlState, `invalid control: ${control}`)
     assert.ok(typeof state === 'boolean', `invalid state: ${state}`)
     if (controlState[control] === state) return
@@ -310,13 +359,13 @@ function inject (bot) {
       bot.client.write('entity_action', {
         entityId: bot.entity.id,
         actionId: state ? 3 : 4,
-        jumpBoost: 0
+        jumpBoost: 0,
       })
     } else if (control === 'sneak') {
       bot.client.write('entity_action', {
         entityId: bot.entity.id,
         actionId: state ? 0 : 1,
-        jumpBoost: 0
+        jumpBoost: 0,
       })
     }
   }
@@ -331,17 +380,17 @@ function inject (bot) {
 
   for (const control of Object.keys(controlState)) {
     Object.defineProperty(bot.controlState, control, {
-      get () {
+      get() {
         return controlState[control]
       },
-      set (state) {
+      set(state) {
         bot.setControlState(control, state)
         return state
-      }
+      },
     })
   }
 
-  function noop (err) {
+  function noop(err) {
     if (err) throw err
   }
 
@@ -351,7 +400,7 @@ function inject (bot) {
     bot.entity.yaw = yaw
     bot.entity.pitch = pitch
     if (force) lastSentYaw = yaw
-    function checkYaw () {
+    function checkYaw() {
       if (Math.abs((lastSentYaw - yaw) % PI_2) < 0.001) {
         bot.removeListener('move', checkYaw)
         cb()
@@ -361,7 +410,9 @@ function inject (bot) {
   }
 
   bot.lookAt = (point, force, cb) => {
-    const delta = point.minus(bot.entity.position.offset(0, bot.entity.height, 0))
+    const delta = point.minus(
+      bot.entity.position.offset(0, bot.entity.height, 0)
+    )
     const yaw = Math.atan2(-delta.x, -delta.z)
     const groundDistance = Math.sqrt(delta.x * delta.x + delta.z * delta.z)
     const pitch = Math.atan2(delta.y, groundDistance)
@@ -369,12 +420,15 @@ function inject (bot) {
   }
 
   // player position and look
-  bot.client.on('position', (packet) => {
+  bot.client.on('position', packet => {
     if (positionUpdateTimer === null) {
       // got first 0x0d. start the clocks
       bot.entity.yaw = conv.fromNotchianYaw(packet.yaw)
       bot.entity.pitch = conv.fromNotchianPitch(packet.pitch)
-      positionUpdateTimer = setInterval(sendPosition, POSITION_UPDATE_INTERVAL_MS)
+      positionUpdateTimer = setInterval(
+        sendPosition,
+        POSITION_UPDATE_INTERVAL_MS
+      )
     }
 
     bot.entity.velocity.set(0, 0, 0)
@@ -384,14 +438,7 @@ function inject (bot) {
     if (packet.stance) bot.entity.height = packet.stance - bot.entity.position.y
     else bot.entity.height = 1.62
 
-    if (bot.majorVersion === '1.8') {
-      sendPositionAndLook(bot.entity)
-    }
-
-    if (bot.majorVersion === '1.9' || bot.majorVersion === '1.10' || bot.majorVersion === '1.11' || bot.majorVersion === '1.12') {
-      bot.client.write('teleport_confirm', { teleportId: packet.teleportId })
-      bot.emit('move')
-    }
+    bot.client.write('teleport_confirm', { teleportId: packet.teleportId })
 
     if (doPhysicsTimer === null) {
       bot.entity.timeSinceOnGround = 0

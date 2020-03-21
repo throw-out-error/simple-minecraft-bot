@@ -1,6 +1,6 @@
 {
-  "name": "simple-minecraft-bot",
-  "version": "1.0.0",
+  "name": "@throw-out-error/simple-minecraft-bot",
+  "version": "1.0.1",
   "description": "idk",
   "main": "bot.js",
   "scripts": {
@@ -11,5 +11,9 @@
   "dependencies": {
     "minecraft-protocol": "^1.11.0",
     "prismarine-chunk": "^1.11.1"
+  },
+  "publishConfig": { "registry": "https://npm.pkg.github.com/throw-out-error" } ,
+  "repository": {
+    "url": "https://github.com/throw-out-error/simple-minecraft-bot"
   }
 }

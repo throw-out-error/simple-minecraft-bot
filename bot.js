@@ -1,12 +1,12 @@
 let mc = require('minecraft-protocol')
 let EventEmitter = require('events')
 const coreLibraries = {
-    info: require('./bot-lib/info'),
-    inventory: require('./bot-lib/inventory'),
-    digging: require('./bot-lib/digging'),
-    respawn: require('./bot-lib/respawn'),
-    blocks: require('./bot-lib/blocks'),
-    physics: require('./bot-lib/physics'),
+    info: './bot-lib/info',
+    inventory: './bot-lib/inventory',
+    digging: './bot-lib/digging',
+    respawn: './bot-lib/respawn',
+    blocks: './bot-lib/blocks',
+    physics: './bot-lib/physics',
 }
 
 module.exports = {
